@@ -1537,7 +1537,6 @@ void saveConfig() {
   #endif 
 }
 
-
 void poweroff(void) {
   enable = 0;
   #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
@@ -1549,9 +1548,18 @@ void poweroff(void) {
     buzzerFreq = (uint8_t)i;
     HAL_Delay(100);
   }
+  buzzerFreq = 0;
   saveConfig();
   HAL_GPIO_WritePin(OFF_PORT, OFF_PIN, GPIO_PIN_RESET);
-  while(1) {}
+  while(1) { //Incase of Mcu has still power through external soure, programmer, or the power circuit is broken
+    HAL_GPIO_WritePin(LED_PORT, LED_PIN, ((HAL_GetTick()%1000)<500)); //Blink Led at 2Hz
+    if(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)){ //Resets the Mcu when Power button has been pressed again
+      while (HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)){
+        HAL_Delay(10);
+      }
+      NVIC_SystemReset();
+    }
+  }
 }
 
 
