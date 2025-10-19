@@ -179,9 +179,6 @@ static uint8_t button1;                 // Blue
 static uint8_t button2;                 // Green
 #endif
 
-#ifdef VARIANT_HOVERCAR
-static uint8_t brakePressed;
-#endif
 
 #if defined(CRUISE_CONTROL_SUPPORT) || (defined(STANDSTILL_HOLD_ENABLE) && (CTRL_TYP_SEL == FOC_CTRL) && (CTRL_MOD_REQ != SPD_MODE))
 static uint8_t cruiseCtrlAcv = 0;
@@ -930,7 +927,7 @@ void handleTimeout(void) {
           inIdx = 1;                                    // Switch to Auxiliary input in case of NO Timeout on Auxiliary input
         #endif
       }
-      #if (defined(CONTROL_SERIAL_USART3) && CONTROL_SERIAL_USART3 == 0) || (defined(SIDEBOARD_SERIAL_USART3) && SIDEBOARD_SERIAL_USART3 == 0 &&)
+      #if (defined(CONTROL_SERIAL_USART3) && CONTROL_SERIAL_USART3 == 0) || (defined(SIDEBOARD_SERIAL_USART3) && SIDEBOARD_SERIAL_USART3 == 0)
         timeoutFlgSerial = timeoutFlgSerial_R;          // Report Timeout only on the Primary Input
       #endif
     #endif
@@ -974,15 +971,6 @@ void readCommand(void) {
       #endif
 
     handleTimeout();
-
-    #ifdef VARIANT_HOVERCAR
-    if (inIdx == CONTROL_ADC) {
-      brakePressed = (uint8_t)(input1[inIdx].cmd > 50);
-    }
-    else {
-      brakePressed = (uint8_t)(input2[inIdx].cmd < -50);
-    }
-    #endif
 
     #if defined(SUPPORT_BUTTONS_LEFT) || defined(SUPPORT_BUTTONS_RIGHT)
       button1 = !HAL_GPIO_ReadPin(BUTTON1_PORT, BUTTON1_PIN);
@@ -1257,16 +1245,6 @@ void sideboardLeds(uint8_t *leds) {
       *leds ^= LED5_SET;
     }
 
-    // Brake: use LED5 (upper Blue)
-    // brakePressed == 1, turn on led
-    // brakePressed == 0, turn off led
-    #ifdef VARIANT_HOVERCAR
-      if (brakePressed) {
-        *leds |= LED5_SET;
-      } else if (!brakePressed && !backwardDrive) {
-        *leds &= ~LED5_SET;
-      }
-    #endif
 
     // Battery Level Indicator: use LED1, LED2, LED3
     if (main_loop_counter % BAT_BLINK_INTERVAL == 0) {              //  | RED (LED1) | YELLOW (LED3) | GREEN (LED2) |
@@ -1581,69 +1559,6 @@ void mixerFcn(int16_t rtu_speed, int16_t rtu_steer, int16_t *rty_speedR, int16_t
     tmp         = CLAMP(tmp, -32768, 32767);  // Overflow protection
     *rty_speedL = (int16_t)(tmp >> 4);        // Convert from fixed-point to int
     *rty_speedL = CLAMP(*rty_speedL, INPUT_MIN, INPUT_MAX);
-}
-
-
-
-/* =========================== Multiple Tap Function =========================== */
-
-  /* multipleTapDet(int16_t u, uint32_t timeNow, MultipleTap *x)
-  * This function detects multiple tap presses, such as double tapping, triple tapping, etc.
-  * Inputs:       u = int16_t (input signal); timeNow = uint32_t (current time)  
-  * Outputs:      x->b_multipleTap (get the output here)
-  */
-void multipleTapDet(int16_t u, uint32_t timeNow, MultipleTap *x) {
-  uint8_t 	b_timeout;
-  uint8_t 	b_hyst;
-  uint8_t 	b_pulse;
-  uint8_t 	z_pulseCnt;
-  uint8_t   z_pulseCntRst;
-  uint32_t 	t_time; 
-
-  // Detect hysteresis
-  if (x->b_hysteresis) {
-    b_hyst = (u > MULTIPLE_TAP_LO);
-  } else {
-    b_hyst = (u > MULTIPLE_TAP_HI);
-  }
-
-  // Detect pulse
-  b_pulse = (b_hyst != x->b_hysteresis);
-
-  // Save time when first pulse is detected
-  if (b_hyst && b_pulse && (x->z_pulseCntPrev == 0)) {
-    t_time = timeNow;
-  } else {
-    t_time = x->t_timePrev;
-  }
-
-  // Create timeout boolean
-  b_timeout = (timeNow - t_time > MULTIPLE_TAP_TIMEOUT);
-
-  // Create pulse counter
-  if ((!b_hyst) && (x->z_pulseCntPrev == 0)) {
-    z_pulseCnt = 0U;
-  } else {
-    z_pulseCnt = b_pulse;
-  }
-
-  // Reset counter if we detected complete tap presses OR there is a timeout
-  if ((x->z_pulseCntPrev >= MULTIPLE_TAP_NR) || b_timeout) {
-    z_pulseCntRst = 0U;
-  } else {
-    z_pulseCntRst = x->z_pulseCntPrev;
-  }
-  z_pulseCnt = z_pulseCnt + z_pulseCntRst;
-
-  // Check if complete tap presses are detected AND no timeout
-  if ((z_pulseCnt >= MULTIPLE_TAP_NR) && (!b_timeout)) {
-    x->b_multipleTap = !x->b_multipleTap;	// Toggle output
-  }
-
-  // Update states
-  x->z_pulseCntPrev = z_pulseCnt;
-  x->b_hysteresis 	= b_hyst;
-  x->t_timePrev 	  = t_time;
 }
 
 
