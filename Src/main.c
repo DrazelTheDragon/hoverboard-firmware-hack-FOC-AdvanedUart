@@ -72,8 +72,8 @@ extern InputStruct input2[];            // input structure
 
 extern int16_t speedAvg;                // Average measured speed
 extern int16_t speedAvgAbs;             // Average measured speed in absolute
-extern volatile uint32_t timeoutCntGen; // Timeout counter for the General timeout (PPM, PWM)
-extern volatile uint8_t  timeoutFlgGen; // Timeout Flag for the General timeout (PPM, PWM)
+extern volatile uint32_t timeoutCntGen; // Timeout counter for the General timeout (PPM,)
+extern volatile uint8_t  timeoutFlgGen; // Timeout Flag for the General timeout (PPM,)
 extern uint8_t timeoutFlgADC;           // Timeout Flag for for ADC Protection: 0 = OK, 1 = Problem detected (line disconnected or wrong ADC data)
 extern uint8_t timeoutFlgSerial;        // Timeout Flag for Rx Serial command: 0 = OK, 1 = Problem detected (line disconnected or wrong Rx data)
 
@@ -92,10 +92,6 @@ extern SerialSideboard Sideboard_R;
 #endif
 #if (defined(CONTROL_PPM_LEFT) && defined(DEBUG_SERIAL_USART3)) || (defined(CONTROL_PPM_RIGHT) && defined(DEBUG_SERIAL_USART2))
 extern volatile uint16_t ppm_captured_value[PPM_NUM_CHANNELS+1];
-#endif
-#if (defined(CONTROL_PWM_LEFT) && defined(DEBUG_SERIAL_USART3)) || (defined(CONTROL_PWM_RIGHT) && defined(DEBUG_SERIAL_USART2))
-extern volatile uint16_t pwm_captured_ch1_value;
-extern volatile uint16_t pwm_captured_ch2_value;
 #endif
 
 
@@ -392,7 +388,7 @@ int main(void) {
       beepCount(2, 24, 1);
     } else if (timeoutFlgSerial) {                                                                    // 3 beeps (low pitch): Serial timeout
       beepCount(3, 24, 1);
-    } else if (timeoutFlgGen) {                                                                       // 4 beeps (low pitch): General timeout (PPM, PWM)
+    } else if (timeoutFlgGen) {                                                                       // 4 beeps (low pitch): General timeout (PPM)
       beepCount(4, 24, 1);
     } else if (TEMP_WARNING_ENABLE && board_temp_deg_c >= TEMP_WARNING) {                             // 5 beeps (low pitch): Mainboard temperature warning
       beepCount(5, 24, 1);

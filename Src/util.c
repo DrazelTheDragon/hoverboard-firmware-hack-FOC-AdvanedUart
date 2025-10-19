@@ -61,12 +61,6 @@ extern volatile uint32_t main_loop_counter;
 extern volatile uint16_t ppm_captured_value[PPM_NUM_CHANNELS+1];
 #endif
 
-#if defined(CONTROL_PWM_LEFT) || defined(CONTROL_PWM_RIGHT)
-extern volatile uint16_t pwm_captured_ch1_value;
-extern volatile uint16_t pwm_captured_ch2_value;
-#endif
-
-
 //------------------------------------------------------------------------
 // Global variables set here in util.c
 //------------------------------------------------------------------------
@@ -257,9 +251,6 @@ void Input_Init(void) {
     PPM_Init();
   #endif
 
- #if defined(CONTROL_PWM_LEFT) || defined(CONTROL_PWM_RIGHT)
-    PWM_Init();
-  #endif
 
   #if defined(DEBUG_SERIAL_USART2) || defined(CONTROL_SERIAL_USART2) || defined(FEEDBACK_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART2)
     UART2_Init();
@@ -830,23 +821,10 @@ void readInputRaw(void) {
       button1 = ppm_captured_value[5] > 500;
       button2 = 0;
     #endif
-
-    #if defined(CONTROL_PWM_LEFT)
-    if (inIdx == CONTROL_PWM_LEFT) {
-      input1[inIdx].raw = (pwm_captured_ch1_value - 500) * 2;
-      input2[inIdx].raw = (pwm_captured_ch2_value - 500) * 2;
-    }
-    #endif
-    #if defined(CONTROL_PWM_RIGHT)
-    if (inIdx == CONTROL_PWM_RIGHT) {
-      input1[inIdx].raw = (pwm_captured_ch1_value - 500) * 2;
-      input2[inIdx].raw = (pwm_captured_ch2_value - 500) * 2;
-    }
-    #endif
 }
 
  /*
- * Function to handle the ADC, UART and General timeout ( PPM, PWM)
+ * Function to handle the ADC, UART and General timeout ( PPM)
  */
 void handleTimeout(void) {
     #ifdef CONTROL_ADC

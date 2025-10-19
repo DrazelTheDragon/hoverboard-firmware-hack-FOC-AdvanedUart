@@ -9,8 +9,6 @@
 
 TIM_HandleTypeDef TimHandle;
 TIM_HandleTypeDef TimHandle2;
-uint8_t  ppm_count = 0;
-uint8_t  pwm_count = 0;
 uint32_t timeoutCntGen = TIMEOUT;
 uint8_t  timeoutFlgGen = 0;
 
@@ -91,125 +89,6 @@ void PPM_Init(void) {
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
   #endif
 
-  HAL_TIM_Base_Start(&TimHandle);
-}
-#endif
-
-
-#if defined(CONTROL_PWM_LEFT) || defined(CONTROL_PWM_RIGHT)
- /*
-  * Illustration of the PWM functionality
-  * CH1 ________|‾‾‾‾‾‾‾‾‾‾|________
-  * CH2 ______________|‾‾‾‾‾‾‾‾‾‾‾|________
-  *             ↑     ↑    ↑      ↑
-  * TIM2       RST  SAVE RC_CH1 RC_CH1
- */
-
-uint16_t pwm_captured_ch1_value = 500;
-uint16_t pwm_captured_ch2_value = 500;
-uint16_t pwm_CNT_prev_ch1 = 0;
-uint16_t pwm_CNT_prev_ch2 = 0;
-uint32_t pwm_timeout_ch1 = 0;
-uint32_t pwm_timeout_ch2 = 0;
-
-void PWM_ISR_CH1_Callback(void) {
-  // Dummy loop with 16 bit count wrap around
-  if(HAL_GPIO_ReadPin(PWM_PORT_CH1, PWM_PIN_CH1)) {   // Rising  Edge interrupt -> save timer value OR reset timer
-    if (HAL_GPIO_ReadPin(PWM_PORT_CH2, PWM_PIN_CH2)) {
-      pwm_CNT_prev_ch1 = TIM2->CNT;
-    } else {
-      TIM2->CNT = 0;
-      pwm_CNT_prev_ch1 = 0;
-    }
-  } else {                                    // Falling Edge interrupt -> measure pulse duration
-    uint16_t rc_signal = TIM2->CNT - pwm_CNT_prev_ch1;
-    if (IN_RANGE(rc_signal, 900, 2100)){
-      timeoutCntGen = 0;
-      timeoutFlgGen = 0;
-      pwm_timeout_ch1 = 0;
-      pwm_captured_ch1_value = CLAMP(rc_signal, 1000, 2000) - 1000;
-    }
-  }
-}
-
-void PWM_ISR_CH2_Callback(void) {
-  // Dummy loop with 16 bit count wrap around
-  if(HAL_GPIO_ReadPin(PWM_PORT_CH2, PWM_PIN_CH2)) {   // Rising  Edge interrupt -> save timer value OR reset timer
-    if (HAL_GPIO_ReadPin(PWM_PORT_CH1, PWM_PIN_CH1)) {
-      pwm_CNT_prev_ch2 = TIM2->CNT;
-    } else {
-      TIM2->CNT = 0;
-      pwm_CNT_prev_ch2 = 0;
-    }
-  } else {                                    // Falling Edge interrupt -> measure pulse duration
-    uint16_t rc_signal = TIM2->CNT - pwm_CNT_prev_ch2;
-    if (IN_RANGE(rc_signal, 900, 2100)){
-      timeoutCntGen = 0;
-      timeoutFlgGen = 0;
-      pwm_timeout_ch2 = 0;
-      pwm_captured_ch2_value = CLAMP(rc_signal, 1000, 2000) - 1000;
-    }
-  }
-}
-
-// SysTick executes once each ms
-void PWM_SysTick_Callback(void) {
-  pwm_timeout_ch1++;
-  pwm_timeout_ch2++;
-  // Stop after 500 ms without PWM signal
-  if(pwm_timeout_ch1 > 500) {
-    pwm_captured_ch1_value = 500;
-    pwm_timeout_ch1 = 0;
-  }
-  if(pwm_timeout_ch2 > 500) {
-    pwm_captured_ch2_value = 500;
-    pwm_timeout_ch2 = 0;
-  }
-}
-
-void PWM_Init(void) {
-  // PWM Timer (TIM2)
-  __HAL_RCC_TIM2_CLK_ENABLE();
-  TimHandle.Instance            = TIM2;
-  TimHandle.Init.Period         = UINT16_MAX;
-  TimHandle.Init.Prescaler      = (SystemCoreClock/DELAY_TIM_FREQUENCY_US)-1;;
-  TimHandle.Init.ClockDivision  = 0;
-  TimHandle.Init.CounterMode    = TIM_COUNTERMODE_UP;
-  HAL_TIM_Base_Init(&TimHandle);  
-  
-  // Channel 1 (steering)
-  GPIO_InitTypeDef GPIO_InitStruct1 = {0};
-  // Configure GPIO pin : PA2 (Left) or PB10 (Right)
-  GPIO_InitStruct1.Pin          = PWM_PIN_CH1;
-  GPIO_InitStruct1.Mode         = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct1.Speed        = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct1.Pull         = GPIO_PULLDOWN;
-  HAL_GPIO_Init(PWM_PORT_CH1, &GPIO_InitStruct1);
-
-  // Channel 2 (speed)
-  GPIO_InitTypeDef GPIO_InitStruct2 = {0};
-  /*Configure GPIO pin : PA3 (Left) or PB11 (Right) */
-  GPIO_InitStruct2.Pin          = PWM_PIN_CH2;
-  GPIO_InitStruct2.Mode         = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct2.Speed        = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct2.Pull         = GPIO_PULLDOWN;
-  HAL_GPIO_Init(PWM_PORT_CH2, &GPIO_InitStruct2);
-
-  #ifdef CONTROL_PWM_LEFT
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
-  #endif
-
-  #ifdef CONTROL_PWM_RIGHT
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-  #endif
-
-  // Start timer
   HAL_TIM_Base_Start(&TimHandle);
 }
 #endif
