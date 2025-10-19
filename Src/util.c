@@ -116,7 +116,7 @@ float    setDistance;
 uint16_t VirtAddVarTab[NB_OF_VAR] = {1337};       // Virtual address defined by the user: 0xFFFF value is prohibited
 static   uint16_t saveValue       = 0;
 static   uint8_t  saveValue_valid = 0;
-#elif !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER)
+#elif !defined(VARIANT_TRANSPOTTER)
 uint16_t VirtAddVarTab[NB_OF_VAR] = {1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
                                      1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018};
 #else
@@ -131,7 +131,7 @@ static int16_t INPUT_MAX;             // [-] Input target maximum limitation
 static int16_t INPUT_MIN;             // [-] Input target minimum limitation
 
 
-#if !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER)
+#if !defined(VARIANT_TRANSPOTTER)
   static uint8_t  cur_spd_valid  = 0;
   static uint8_t  inp_cal_valid  = 0;
 #endif
@@ -297,7 +297,7 @@ void Input_Init(void) {
     UART_DisableRxErrors(&huart3);
   #endif
 
-  #if !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER)
+  #if !defined(VARIANT_TRANSPOTTER)
     uint16_t writeCheck, readVal;
     HAL_FLASH_Unlock();
     EE_Init();            /* EEPROM Init */
@@ -504,7 +504,7 @@ void adcCalibLim(void) {
     return;
   }
 
-#if !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER)
+#if !defined(VARIANT_TRANSPOTTER)
 
   #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
   printf("Input calibration started...\r\n");
@@ -615,7 +615,7 @@ void updateCurSpdLim(void) {
     return;
   }
 
-#if !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER)
+#if !defined(VARIANT_TRANSPOTTER)
 
   #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
   printf("Torque and Speed limits update started...\r\n");
@@ -975,7 +975,7 @@ void handleTimeout(void) {
           inIdx = 1;                                    // Switch to Auxiliary input in case of NO Timeout on Auxiliary input
         #endif
       }
-      #if (defined(CONTROL_SERIAL_USART2) && CONTROL_SERIAL_USART2 == 0) || (defined(SIDEBOARD_SERIAL_USART2) && SIDEBOARD_SERIAL_USART2 == 0 && !defined(VARIANT_HOVERBOARD))
+      #if (defined(CONTROL_SERIAL_USART2) && CONTROL_SERIAL_USART2 == 0) || (defined(SIDEBOARD_SERIAL_USART2) && SIDEBOARD_SERIAL_USART2 == 0)
         timeoutFlgSerial = timeoutFlgSerial_L;          // Report Timeout only on the Primary Input
       #endif
     #endif
@@ -998,7 +998,7 @@ void handleTimeout(void) {
           inIdx = 1;                                    // Switch to Auxiliary input in case of NO Timeout on Auxiliary input
         #endif
       }
-      #if (defined(CONTROL_SERIAL_USART3) && CONTROL_SERIAL_USART3 == 0) || (defined(SIDEBOARD_SERIAL_USART3) && SIDEBOARD_SERIAL_USART3 == 0 && !defined(VARIANT_HOVERBOARD))
+      #if (defined(CONTROL_SERIAL_USART3) && CONTROL_SERIAL_USART3 == 0) || (defined(SIDEBOARD_SERIAL_USART3) && SIDEBOARD_SERIAL_USART3 == 0 &&)
         timeoutFlgSerial = timeoutFlgSerial_R;          // Report Timeout only on the Primary Input
       #endif
     #endif
@@ -1053,7 +1053,7 @@ void handleTimeout(void) {
 void readCommand(void) {
     readInputRaw();
 
-    #if !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER)
+    #if !defined(VARIANT_TRANSPOTTER)
       calcInputCmd(&input1[inIdx], INPUT_MIN, INPUT_MAX);
       #if !defined(VARIANT_SKATEBOARD)
         calcInputCmd(&input2[inIdx], INPUT_MIN, INPUT_MAX);
@@ -1402,7 +1402,7 @@ void sideboardLeds(uint8_t *leds) {
  * In non-hoverboard variants, the sensors are used as push buttons.
  */
 void sideboardSensors(uint8_t sensors) {
-  #if !defined(VARIANT_HOVERBOARD) && (defined(SIDEBOARD_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART3))
+  #if (defined(SIDEBOARD_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART3))
     static uint8_t sensor1_index;                                 // holds the press index number for sensor1, when used as a button
     static uint8_t sensor1_prev,  sensor2_prev;
     uint8_t sensor1_trig = 0, sensor2_trig = 0;
@@ -1512,7 +1512,7 @@ void saveConfig() {
       HAL_FLASH_Lock();
     }
   #endif
-  #if !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER)
+  #if !defined(VARIANT_TRANSPOTTER)
     if (inp_cal_valid || cur_spd_valid) {
       #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
         printf("Saving configuration to EEprom\r\n");
@@ -1564,7 +1564,7 @@ void poweroff(void) {
 
 
 void poweroffPressCheck(void) {
-  #if !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER)
+  #if !defined(VARIANT_TRANSPOTTER)
     if(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) {
       uint16_t cnt_press = 0;
       while(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) {

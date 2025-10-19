@@ -17,7 +17,6 @@
   //#define VARIANT_PWM         // Variant for RC-Remote with PWM Signal
   //#define VARIANT_IBUS        // Variant for RC-Remotes with FLYSKY IBUS
   //#define VARIANT_HOVERCAR    // Variant for HOVERCAR build
-  //#define VARIANT_HOVERBOARD  // Variant for HOVERBOARD build
   //#define VARIANT_TRANSPOTTER // Variant for TRANSPOTTER build https://github.com/NiklasFauth/hoverboard-firmware-hack/wiki/Build-Instruction:-TranspOtter https://hackaday.io/project/161891-transpotter-ng
 //#endif
 // ########################### END OF VARIANT SELECTION ############################
@@ -555,28 +554,6 @@
 // ######################## END OF VARIANT_HOVERCAR SETTINGS #########################
 
 
-
-// ############################ VARIANT_HOVERBOARD SETTINGS ############################
-// Communication:         [DONE]
-// Balancing controller:  [TODO]
-#ifdef VARIANT_HOVERBOARD
-  #define FLASH_WRITE_KEY     0x1008          // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-  #define SIDEBOARD_SERIAL_USART2 1           // left sensor board cable. Number indicates priority for dual-input. Disable if ADC or PPM is used! 
-  #define FEEDBACK_SERIAL_USART2
-  #define SIDEBOARD_SERIAL_USART3 0           // right sensor board cable. Number indicates priority for dual-input. Disable if I2C (nunchuk or lcd) is used!
-  #define FEEDBACK_SERIAL_USART3
-
-  // If an iBUS RC receiver is connected to either Left Sideboard (AUX_INPUT) or Right Sideboard (PRI_INPUT)
-  // PRIMARY INPUT:          TYPE, MIN, MID, MAX, DEADBAND /* TYPE: 0:Disabled, 1:Normal Pot, 2:Middle Resting Pot, 3:Auto-detect */
-  #define PRI_INPUT1          3, -1000, 0, 1000, 0  // Priority Sideboard can be used to send commands via an iBUS Receiver connected to the sideboard
-  #define PRI_INPUT2          3, -1000, 0, 1000, 0  // Priority Sideboard can be used to send commands via an iBUS Receiver connected to the sideboard
-  #define AUX_INPUT1          3, -1000, 0, 1000, 0  // not used
-  #define AUX_INPUT2          3, -1000, 0, 1000, 0  // not used
-#endif
-// ######################## END OF VARIANT_HOVERBOARD SETTINGS #########################
-
-
-
 // ################################# VARIANT_TRANSPOTTER SETTINGS ############################
 //TODO ADD VALIDATION
 #ifdef VARIANT_TRANSPOTTER
@@ -646,7 +623,7 @@
 
 // ############################### VALIDATE SETTINGS ###############################
 #if !defined(VARIANT_ADC) && !defined(VARIANT_USART) && !defined(VARIANT_NUNCHUK) && !defined(VARIANT_PPM) && !defined(VARIANT_PWM) && \
-    !defined(VARIANT_IBUS) && !defined(VARIANT_HOVERCAR) && !defined(VARIANT_HOVERBOARD) && !defined(VARIANT_TRANSPOTTER) && !defined(VARIANT_SKATEBOARD)
+    !defined(VARIANT_IBUS) && !defined(VARIANT_HOVERCAR) && !defined(VARIANT_TRANSPOTTER)
   #error Variant not defined! Please check platformio.ini or Inc/config.h for available variants.
 #endif
 
