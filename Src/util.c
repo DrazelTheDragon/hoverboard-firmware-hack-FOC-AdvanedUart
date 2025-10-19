@@ -57,10 +57,6 @@ extern volatile uint32_t timeoutCntGen; // global counter for general timeout co
 extern volatile uint8_t  timeoutFlgGen; // global flag for general timeout counter
 extern volatile uint32_t main_loop_counter;
 
-#if defined(CONTROL_PPM_LEFT) || defined(CONTROL_PPM_RIGHT)
-extern volatile uint16_t ppm_captured_value[PPM_NUM_CHANNELS+1];
-#endif
-
 //------------------------------------------------------------------------
 // Global variables set here in util.c
 //------------------------------------------------------------------------
@@ -247,11 +243,6 @@ void Input_Lim_Init(void) {     // Input Limitations - ! Do NOT touch !
 }
 
 void Input_Init(void) {
-  #if defined(CONTROL_PPM_LEFT) || defined(CONTROL_PPM_RIGHT)
-    PPM_Init();
-  #endif
-
-
   #if defined(DEBUG_SERIAL_USART2) || defined(CONTROL_SERIAL_USART2) || defined(FEEDBACK_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART2)
     UART2_Init();
   #endif
@@ -804,27 +795,10 @@ void readInputRaw(void) {
       input2[inIdx].raw = Sideboard_R.cmd2;
     }
     #endif
-
-    #if defined(CONTROL_PPM_LEFT)
-    if (inIdx == CONTROL_PPM_LEFT) {
-      input1[inIdx].raw = (ppm_captured_value[0] - 500) * 2;
-      input2[inIdx].raw = (ppm_captured_value[1] - 500) * 2;
-    }
-    #endif
-    #if defined(CONTROL_PPM_RIGHT)
-    if (inIdx == CONTROL_PPM_RIGHT) {
-      input1[inIdx].raw = (ppm_captured_value[0] - 500) * 2;
-      input2[inIdx].raw = (ppm_captured_value[1] - 500) * 2;
-    }
-    #endif
-    #if (defined(CONTROL_PPM_LEFT) || defined(CONTROL_PPM_RIGHT)) && defined(SUPPORT_BUTTONS)
-      button1 = ppm_captured_value[5] > 500;
-      button2 = 0;
-    #endif
 }
 
  /*
- * Function to handle the ADC, UART and General timeout ( PPM)
+ * Function to handle the ADC, UART and General timeout
  */
 void handleTimeout(void) {
     #ifdef CONTROL_ADC

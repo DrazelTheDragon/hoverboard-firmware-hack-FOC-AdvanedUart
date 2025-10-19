@@ -12,7 +12,6 @@
 //#if !defined(PLATFORMIO)
   //#define VARIANT_ADC         // Variant for control via ADC input
   //#define VARIANT_USART       // Variant for Serial control via USART3 input
-  //#define VARIANT_PPM         // Variant for RC-Remote with PPM-Sum Signal
 //#endif
 // ########################### END OF VARIANT SELECTION ############################
 
@@ -226,8 +225,8 @@
  * DEBUG ASCII output is:
  * // "in1:345 in2:1337 cmdL:0 cmdR:0 BatADC:0 BatV:0 TempADC:0 Temp:0\r\n"
  *
- * in1:     (int16_t)input1[inIdx].raw);                                        raw input1: ADC1, UART, PPM
- * in2:     (int16_t)input2[inIdx].raw);                                        raw input2: ADC2, UART, PPM
+ * in1:     (int16_t)input1[inIdx].raw);                                        raw input1: ADC1, UART
+ * in2:     (int16_t)input2[inIdx].raw);                                        raw input2: ADC2, UART
  * cmdL:    (int16_t)cmdL);                                                     output command Left: [-1000, 1000]
  * cmdR:    (int16_t)cmdR);                                                     output command Right: [-1000, 1000]
  * BatADC:  (int16_t)adc_buffer.batt1);                                         Battery adc-value measured by mainboard
@@ -237,7 +236,7 @@
  *
 */
 
-// #define DEBUG_SERIAL_USART2          // left sensor board cable, disable if ADC or PPM is used!
+// #define DEBUG_SERIAL_USART2          // left sensor board cable, disable if ADC is used!
 // #define DEBUG_SERIAL_USART3          // right sensor board cable, disable if I2C (lcd) is used!
 // #define DEBUG_SERIAL_PROTOCOL        // uncomment this to send user commands to the board, change parameters and print specific signals (see comms.c for the user commands)
 // ########################### END OF DEBUG SERIAL ############################
@@ -300,8 +299,8 @@
 // ############################ VARIANT_USART SETTINGS ############################
 #ifdef VARIANT_USART
   // #define SIDEBOARD_SERIAL_USART2 0
-  #define CONTROL_SERIAL_USART2  0    // left sensor board cable, disable if ADC or PPM is used! For Arduino control check the hoverSerial.ino
-  #define FEEDBACK_SERIAL_USART2      // left sensor board cable, disable if ADC or PPM is used!
+  #define CONTROL_SERIAL_USART2  0    // left sensor board cable, disable if ADC is used! For Arduino control check the hoverSerial.ino
+  #define FEEDBACK_SERIAL_USART2      // left sensor board cable, disable if ADC is used!
 
   // #define SIDEBOARD_SERIAL_USART3 0
   // #define CONTROL_SERIAL_USART3  0    // right sensor board cable. Number indicates priority for dual-input. Disable if I2C (lcd) is used! For Arduino control check the hoverSerial.ino
@@ -325,45 +324,6 @@
   // #define SUPPORT_BUTTONS_RIGHT      // use right sensor board cable for button inputs. Disable DEBUG_SERIAL_USART3!
 #endif
 // ######################## END OF VARIANT_USART SETTINGS #########################
-
-
-// ################################# VARIANT_PPM SETTINGS ##############################
-#ifdef VARIANT_PPM
-/* ###### CONTROL VIA RC REMOTE ######
- * Right sensor board cable. Channel 1: steering, Channel 2: speed.
- * https://gist.github.com/peterpoetzi/1b63a4a844162196613871767189bd05
-*/
-  // #define DUAL_INPUTS                     // ADC*(Primary) + PPM(Auxiliary). Uncomment this to use Dual-inputs
-  #ifdef DUAL_INPUTS
-    #define FLASH_WRITE_KEY       0x1104  // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-    #define CONTROL_ADC           0       // use ADC as input. Number indicates priority for dual-input. Disable CONTROL_SERIAL_USART2, FEEDBACK_SERIAL_USART2, DEBUG_SERIAL_USART2!
-    #define CONTROL_PPM_RIGHT     1       // use PPM-Sum as input on the RIGHT cable. Number indicates priority for dual-input. Disable CONTROL_SERIAL_USART3!
-    #define PRI_INPUT1            3,     0, 0, 4095,   0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define PRI_INPUT2            3,     0, 0, 4095,   0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define AUX_INPUT1            3, -1000, 0, 1000, 100  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define AUX_INPUT2            3, -1000, 0, 1000, 100  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #else
-    #define FLASH_WRITE_KEY       0x1004  // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-    // #define CONTROL_PPM_LEFT      0       // use PPM-Sum as input on the LEFT cable. Number indicates priority for dual-input. Disable CONTROL_SERIAL_USART2!
-    #define CONTROL_PPM_RIGHT     0       // use PPM-Sum as input on the RIGHT cable. Number indicates priority for dual-input. Disable CONTROL_SERIAL_USART3!
-    #define PRI_INPUT1            3, -1000, 0, 1000, 100  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define PRI_INPUT2            3, -1000, 0, 1000, 100  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #endif
-  #define PPM_NUM_CHANNELS        6       // total number of PPM channels to receive, even if they are not used.
-
-  // #define TANK_STEERING                   // use for tank steering, each input controls each wheel 
-  // #define SUPPORT_BUTTONS                 // Define for PPM buttons support
-  // #define SUPPORT_BUTTONS_LEFT            // use left sensor board cable for button inputs.  Disable DEBUG_SERIAL_USART2!
-  // #define SUPPORT_BUTTONS_RIGHT           // use right sensor board cable for button inputs. Disable DEBUG_SERIAL_USART3!
-
-  #if defined(CONTROL_PPM_RIGHT) && !defined(DUAL_INPUTS)
-    #define DEBUG_SERIAL_USART2           // left sensor cable debug
-  #elif defined(CONTROL_PPM_LEFT) && !defined(DUAL_INPUTS)
-    #define DEBUG_SERIAL_USART3           // right sensor cable debug
-  #endif
-#endif
-// ############################# END OF VARIANT_PPM SETTINGS ############################
-
 
 
 // ########################### UART SETIINGS ############################
@@ -412,7 +372,7 @@
 
 
 // ############################### VALIDATE SETTINGS ###############################
-#if !defined(VARIANT_ADC) && !defined(VARIANT_USART) && !defined(VARIANT_PPM)
+#if !defined(VARIANT_ADC) && !defined(VARIANT_USART)
   #error Variant not defined! Please check platformio.ini or Inc/config.h for available variants.
 #endif
 
@@ -438,10 +398,6 @@
   #error DEBUG_SERIAL_USART2 and DEBUG_SERIAL_USART3 not allowed, choose one.
 #endif
 
-#if defined(CONTROL_PPM_LEFT) && defined(CONTROL_PPM_RIGHT)
-  #error CONTROL_PPM_LEFT and CONTROL_PPM_RIGHT not allowed, choose one.
-#endif
-
 #if defined(SUPPORT_BUTTONS_LEFT) && defined(SUPPORT_BUTTONS_RIGHT)
   #error SUPPORT_BUTTONS_LEFT and SUPPORT_BUTTONS_RIGHT not allowed, choose one.
 #endif
@@ -452,29 +408,15 @@
   #error CONTROL_ADC and SERIAL_USART2 not allowed. It is on the same cable.
 #endif
 
-#if defined(CONTROL_PPM_LEFT) && (defined(CONTROL_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART2) || defined(FEEDBACK_SERIAL_USART2) || defined(DEBUG_SERIAL_USART2))
-  #error CONTROL_PPM_LEFT and SERIAL_USART2 not allowed. It is on the same cable.
-#endif
-
 #if defined(SUPPORT_BUTTONS_LEFT) && (defined(CONTROL_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART2) || defined(FEEDBACK_SERIAL_USART2) || defined(DEBUG_SERIAL_USART2))
   #error SUPPORT_BUTTONS_LEFT and SERIAL_USART2 not allowed. It is on the same cable.
 #endif
 
-#if defined(SUPPORT_BUTTONS_LEFT) && (defined(CONTROL_ADC) || defined(CONTROL_PPM_LEFT))
-  #error SUPPORT_BUTTONS_LEFT and (CONTROL_ADC or CONTROL_PPM_LEFT) not allowed. It is on the same cable.
+#if defined(SUPPORT_BUTTONS_LEFT) && (defined(CONTROL_ADC))
+  #error SUPPORT_BUTTONS_LEFT and (CONTROL_ADC) not allowed. It is on the same cable.
 #endif
-
-#if defined(CONTROL_ADC) && (defined(CONTROL_PPM_LEFT))
-  #error CONTROL_ADC and (CONTROL_PPM_LEFT) not allowed. It is on the same cable.
-#endif
-
-
 
 // RIGHT cable checks
-#if defined(CONTROL_PPM_RIGHT) && (defined(CONTROL_SERIAL_USART3) || defined(SIDEBOARD_SERIAL_USART3) || defined(FEEDBACK_SERIAL_USART3) || defined(DEBUG_SERIAL_USART3))
-  #error CONTROL_PPM_RIGHT and SERIAL_USART3 not allowed. It is on the same cable.
-#endif
-
 #if defined(DEBUG_I2C_LCD) && (defined(CONTROL_SERIAL_USART3) || defined(SIDEBOARD_SERIAL_USART3) || defined(FEEDBACK_SERIAL_USART3) || defined(DEBUG_SERIAL_USART3))
   #error DEBUG_I2C_LCD and SERIAL_USART3 not allowed. It is on the same cable.
 #endif
@@ -483,21 +425,11 @@
   #error SUPPORT_BUTTONS_RIGHT and SERIAL_USART3 not allowed. It is on the same cable.
 #endif
 
-#if defined(SUPPORT_BUTTONS_RIGHT) || defined(CONTROL_PPM_RIGHT) || defined(DEBUG_I2C_LCD)
-  #error SUPPORT_BUTTONS_RIGHT and (CONTROL_PPM_RIGHT or DEBUG_I2C_LCD) not allowed. It is on the same cable.
+#if defined(SUPPORT_BUTTONS_RIGHT) && defined(DEBUG_I2C_LCD)
+  #error SUPPORT_BUTTONS_RIGHT and (DEBUG_I2C_LCD) not allowed. It is on the same cable.
 #endif
-
-
-
-#if defined(DEBUG_I2C_LCD) && (defined(CONTROL_PPM_RIGHT))
-  #error DEBUG_I2C_LCD and (CONTROL_PPM_RIGHT) not allowed. It is on the same cable.
-#endif
-
 
 // Functional checks
-#if (defined(CONTROL_PPM_LEFT) || defined(CONTROL_PPM_RIGHT)) && !defined(PPM_NUM_CHANNELS)
-  #error Total number of PPM channels needs to be set
-#endif
 // ############################# END OF VALIDATE SETTINGS ############################
 
 #endif

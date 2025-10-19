@@ -153,16 +153,6 @@
 #define CHARGER_PORT GPIOA
 #endif
 
-#if defined(CONTROL_PPM_LEFT)
-#define PPM_PIN             GPIO_PIN_3
-#define PPM_PORT            GPIOA
-#elif defined(CONTROL_PPM_RIGHT)
-#define PPM_PIN             GPIO_PIN_11
-#define PPM_PORT            GPIOB
-#endif
-
-
-
 #if defined(SUPPORT_BUTTONS_LEFT)
 #define BUTTON1_PIN         GPIO_PIN_2
 #define BUTTON1_PORT        GPIOA
@@ -219,10 +209,8 @@ typedef struct {
   uint16_t l_rx2;
 } adc_buf_t;
 
-// Define I2C, PPM functions
+// Define I2C function
 void I2C_Init(void);
-void PPM_Init(void);
-void PPM_ISR_Callback(void);
 
 
 // Sideboard definitions
