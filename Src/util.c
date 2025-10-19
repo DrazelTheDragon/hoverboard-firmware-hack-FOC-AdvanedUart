@@ -53,7 +53,6 @@ extern uint8_t buzzerPattern;           // global variable for the buzzer patter
 
 extern uint8_t enable;                  // global variable for motor enable
 
-extern uint8_t nunchuk_data[6];
 extern volatile uint32_t timeoutCntGen; // global counter for general timeout counter
 extern volatile uint8_t  timeoutFlgGen; // global flag for general timeout counter
 extern volatile uint32_t main_loop_counter;
@@ -122,6 +121,8 @@ uint16_t VirtAddVarTab[NB_OF_VAR] = {1000, 1001, 1002, 1003, 1004, 1005, 1006, 1
 static int16_t INPUT_MAX;             // [-] Input target maximum limitation
 static int16_t INPUT_MIN;             // [-] Input target minimum limitation
 
+static uint8_t  cur_spd_valid  = 0;
+static uint8_t  inp_cal_valid  = 0;
 
 #if defined(CONTROL_ADC)
 static uint16_t timeoutCntADC = ADC_PROTECT_TIMEOUT;  // Timeout counter for ADC Protection
@@ -349,10 +350,9 @@ void Input_Init(void) {
     LCD_ClearDisplay(&lcd);
     HAL_Delay(5);
     LCD_SetLocation(&lcd, 0, 0);
-      LCD_WriteString(&lcd, "Hover V2.0");
-    #endif
+    LCD_WriteString(&lcd, "Hover V2.0");
     LCD_SetLocation(&lcd,  0, 1); LCD_WriteString(&lcd, "Initializing...");
-  #endif
+    #endif
 }
 
 /**
@@ -796,19 +796,6 @@ void readInputRaw(void) {
     }
     #endif
 
-    #if defined(CONTROL_NUNCHUK) || defined(SUPPORT_NUNCHUK)
-    if (Nunchuk_Read() == NUNCHUK_CONNECTED) {
-      if (inIdx == CONTROL_NUNCHUK) {
-        input1[inIdx].raw = (nunchuk_data[0] - 127) * 8; // X axis 0-255
-        input2[inIdx].raw = (nunchuk_data[1] - 128) * 8; // Y axis 0-255
-      }
-      #ifdef SUPPORT_BUTTONS
-        button1 = (uint8_t)nunchuk_data[5] & 1;
-        button2 = (uint8_t)(nunchuk_data[5] >> 1) & 1;
-      #endif
-    }
-    #endif
-
     #if defined(CONTROL_SERIAL_USART2)
     if (inIdx == CONTROL_SERIAL_USART2) {
       #ifdef CONTROL_IBUS
@@ -883,7 +870,7 @@ void readInputRaw(void) {
 }
 
  /*
- * Function to handle the ADC, UART and General timeout (Nunchuk, PPM, PWM)
+ * Function to handle the ADC, UART and General timeout ( PPM, PWM)
  */
 void handleTimeout(void) {
     #ifdef CONTROL_ADC
@@ -952,26 +939,6 @@ void handleTimeout(void) {
       timeoutFlgSerial = timeoutFlgSerial_L || timeoutFlgSerial_R;
     #endif
 
-    #if defined(CONTROL_NUNCHUK) || defined(SUPPORT_NUNCHUK) || \
-        defined(CONTROL_PPM_LEFT) || defined(CONTROL_PPM_RIGHT) || defined(CONTROL_PWM_LEFT) || defined(CONTROL_PWM_RIGHT)
-      if (timeoutCntGen++ >= TIMEOUT) {                 // Timeout qualification
-        #if defined(CONTROL_NUNCHUK) || defined(SUPPORT_NUNCHUK) || \
-            (defined(CONTROL_PPM_LEFT) && CONTROL_PPM_LEFT == 0) || (defined(CONTROL_PPM_RIGHT) && CONTROL_PPM_RIGHT == 0) || \
-            (defined(CONTROL_PWM_LEFT) && CONTROL_PWM_LEFT == 0) || (defined(CONTROL_PWM_RIGHT) && CONTROL_PWM_RIGHT == 0)
-          timeoutFlgGen = 1;                            // Report Timeout only on the Primary Input
-          timeoutCntGen = TIMEOUT;
-        #endif
-        #if defined(DUAL_INPUTS) && ((defined(CONTROL_PPM_LEFT)  && CONTROL_PPM_LEFT == 1) || (defined(CONTROL_PPM_RIGHT) && CONTROL_PPM_RIGHT == 1) || \
-                                     (defined(CONTROL_PWM_LEFT)  && CONTROL_PWM_LEFT == 1) || (defined(CONTROL_PWM_RIGHT) && CONTROL_PWM_RIGHT == 1))
-          inIdx = 0;                                    // Switch to Primary input in case of Timeout on Auxiliary input
-        #endif
-      } else {
-        #if defined(DUAL_INPUTS) && ((defined(CONTROL_PPM_LEFT)  && CONTROL_PPM_LEFT == 1) || (defined(CONTROL_PPM_RIGHT) && CONTROL_PPM_RIGHT == 1) || \
-                                     (defined(CONTROL_PWM_LEFT)  && CONTROL_PWM_LEFT == 1) || (defined(CONTROL_PWM_RIGHT) && CONTROL_PWM_RIGHT == 1))
-          inIdx = 1;                                    // Switch to Auxiliary input in case of NO Timeout on Auxiliary input
-        #endif
-      }
-    #endif
 
     // In case of timeout bring the system to a Safe State
     if (timeoutFlgADC || timeoutFlgSerial || timeoutFlgGen) {

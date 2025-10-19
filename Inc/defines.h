@@ -229,16 +229,8 @@ typedef struct {
   uint16_t l_rx2;
 } adc_buf_t;
 
-typedef enum {
-  NUNCHUK_CONNECTING,
-  NUNCHUK_DISCONNECTED,
-  NUNCHUK_RECONNECTING,
-  NUNCHUK_CONNECTED
-} nunchuk_state;
-
-// Define I2C, Nunchuk, PPM, PWM functions
+// Define I2C, PPM, PWM functions
 void I2C_Init(void);
-nunchuk_state Nunchuk_Read(void);
 void PPM_Init(void);
 void PPM_ISR_Callback(void);
 void PWM_Init(void);

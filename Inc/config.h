@@ -8,11 +8,10 @@
 // PlatformIO: uncomment desired variant in platformio.ini
 // Keil uVision: select desired variant from the Target drop down menu (to the right of the Load button)
 // Ubuntu: define the desired build variant here if you want to use make in console
-// or use VARIANT environment variable for example like "make -e VARIANT=VARIANT_NUNCHUK". Select only one at a time.
+// or use VARIANT environment variable for example like "make -e VARIANT=VARIANT_USART". Select only one at a time.
 //#if !defined(PLATFORMIO)
   //#define VARIANT_ADC         // Variant for control via ADC input
   //#define VARIANT_USART       // Variant for Serial control via USART3 input
-  //#define VARIANT_NUNCHUK     // Variant for Nunchuk controlled vehicle build
   //#define VARIANT_PPM         // Variant for RC-Remote with PPM-Sum Signal
   //#define VARIANT_PWM         // Variant for RC-Remote with PWM Signal
   //#define VARIANT_IBUS        // Variant for RC-Remotes with FLYSKY IBUS
@@ -24,7 +23,7 @@
 // ############################### DO-NOT-TOUCH SETTINGS ###############################
 #define PWM_FREQ            16000     // PWM frequency in Hz / is also used for buzzer
 #define DEAD_TIME              48     // PWM deadtime
-#define DELAY_IN_MAIN_LOOP    5     // in ms. default 5. it is independent of all the timing critical stuff. do not touch if you do not know what you are doing.
+#define DELAY_IN_MAIN_LOOP      5     // in ms. default 5. it is independent of all the timing critical stuff. do not touch if you do not know what you are doing.
 #define TIMEOUT                20     // number of wrong / missing input commands before emergency off
 #define A2BIT_CONV             50     // A to bit for current conversion on ADC. Example: 1 A = 50, 2 A = 100, etc
 // #define PRINTF_FLOAT_SUPPORT          // [-] Uncomment this for printf to support float on Serial Debug. It will increase code size! Better to avoid it!
@@ -224,7 +223,6 @@
 // ############################### DEBUG SERIAL ###############################
 /* Connect GND and RX of a 3.3v uart-usb adapter to the left (USART2) or right sensor board cable (USART3)
  * Be careful not to use the red wire of the cable. 15v will destroy everything.
- * If you are using VARIANT_NUNCHUK, disable it temporarily.
  * enable DEBUG_SERIAL_USART3 or DEBUG_SERIAL_USART2
  *
  *
@@ -243,7 +241,7 @@
 */
 
 // #define DEBUG_SERIAL_USART2          // left sensor board cable, disable if ADC or PPM is used!
-// #define DEBUG_SERIAL_USART3          // right sensor board cable, disable if I2C (nunchuk or lcd) is used!
+// #define DEBUG_SERIAL_USART3          // right sensor board cable, disable if I2C (lcd) is used!
 // #define DEBUG_SERIAL_PROTOCOL        // uncomment this to send user commands to the board, change parameters and print specific signals (see comms.c for the user commands)
 // ########################### END OF DEBUG SERIAL ############################
 
@@ -284,13 +282,13 @@
   #ifdef DUAL_INPUTS
     #define FLASH_WRITE_KEY     0x1101    // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
     // #define SIDEBOARD_SERIAL_USART3 1
-    #define CONTROL_SERIAL_USART3 1       // right sensor board cable. Number indicates priority for dual-input. Disable if I2C (nunchuk or lcd) is used! For Arduino control check the hoverSerial.ino
-    #define FEEDBACK_SERIAL_USART3        // right sensor board cable, disable if I2C (nunchuk or lcd) is used!
+    #define CONTROL_SERIAL_USART3 1       // right sensor board cable. Number indicates priority for dual-input. Disable if I2C (lcd) is used! For Arduino control check the hoverSerial.ino
+    #define FEEDBACK_SERIAL_USART3        // right sensor board cable, disable if I2C ( lcd) is used!
     #define AUX_INPUT1          3, -1000, 0, 1000, 0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
     #define AUX_INPUT2          3, -1000, 0, 1000, 0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
   #else
     #define FLASH_WRITE_KEY     0x1001    // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-    #define DEBUG_SERIAL_USART3           // right sensor board cable, disable if I2C (nunchuk or lcd) is used!
+    #define DEBUG_SERIAL_USART3           // right sensor board cable, disable if I2C (lcd) is used!
   #endif
 
   // #define TANK_STEERING                   // use for tank steering, each input controls each wheel 
@@ -309,8 +307,8 @@
   #define FEEDBACK_SERIAL_USART2      // left sensor board cable, disable if ADC or PPM is used!
 
   // #define SIDEBOARD_SERIAL_USART3 0
-  // #define CONTROL_SERIAL_USART3  0    // right sensor board cable. Number indicates priority for dual-input. Disable if I2C (nunchuk or lcd) is used! For Arduino control check the hoverSerial.ino
-  // #define FEEDBACK_SERIAL_USART3      // right sensor board cable, disable if I2C (nunchuk or lcd) is used!
+  // #define CONTROL_SERIAL_USART3  0    // right sensor board cable. Number indicates priority for dual-input. Disable if I2C (lcd) is used! For Arduino control check the hoverSerial.ino
+  // #define FEEDBACK_SERIAL_USART3      // right sensor board cable, disable if I2C (lcd) is used!
  
   // #define DUAL_INPUTS                 //  UART*(Primary) + SIDEBOARD(Auxiliary). Uncomment this to use Dual-inputs
   #define PRI_INPUT1             3, -1000, 0, 1000, 0     // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
@@ -330,42 +328,6 @@
   // #define SUPPORT_BUTTONS_RIGHT      // use right sensor board cable for button inputs. Disable DEBUG_SERIAL_USART3!
 #endif
 // ######################## END OF VARIANT_USART SETTINGS #########################
-
-
-
-// ################################# VARIANT_NUNCHUK SETTINGS ############################
-#ifdef VARIANT_NUNCHUK
-  /* on Right sensor cable
-   * keep cable short, use shielded cable, use ferrits, stabalize voltage in nunchuk,
-   * use the right one of the 2 types of nunchuks, add i2c pullups.
-   * use original nunchuk. most clones does not work very well.
-   * Recommendation: Nunchuk Breakout Board https://github.com/Jan--Henrik/hoverboard-breakout
-  */
-  #define CONTROL_NUNCHUK         0       // use nunchuk as input. Number indicates priority for dual-input. Disable FEEDBACK_SERIAL_USART3, DEBUG_SERIAL_USART3!
-
-  // #define DUAL_INPUTS                     // Nunchuk*(Primary) + UART(Auxiliary). Uncomment this to use Dual-inputs
-  #define PRI_INPUT1              2, -1024, 0, 1024, 0     // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #define PRI_INPUT2              2, -1024, 0, 1024, 0     // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #ifdef DUAL_INPUTS
-    #define FLASH_WRITE_KEY       0x1103  // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-    // #define SIDEBOARD_SERIAL_USART2 1
-    #define CONTROL_SERIAL_USART2 1       // left sensor board cable, disable if ADC or PPM is used! For Arduino control check the hoverSerial.ino
-    #define FEEDBACK_SERIAL_USART2        // left sensor board cable, disable if ADC or PPM is used!
-    #define AUX_INPUT1            3, -1000, 0, 1000, 0     // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define AUX_INPUT2            3, -1000, 0, 1000, 0     // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #else
-    #define FLASH_WRITE_KEY       0x1003  // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-    #define DEBUG_SERIAL_USART2           // left sensor cable debug
-  #endif
-
-  // # maybe good for ARMCHAIR #
-  #define FILTER                  3276    //  0.05f
-  #define SPEED_COEFFICIENT       8192    //  0.5f
-  #define STEER_COEFFICIENT       62259   // -0.2f
-  // #define SUPPORT_BUTTONS                 // Define for Nunchuk buttons support
-#endif
-// ############################# END OF VARIANT_NUNCHUK SETTINGS #########################
-
 
 
 // ################################# VARIANT_PPM SETTINGS ##############################
@@ -509,7 +471,7 @@
   // #define ADC_ALTERNATE_CONNECT             // use to swap ADC inputs
   // #define INVERT_R_DIRECTION                // Invert rotation of right motor
   // #define INVERT_L_DIRECTION                // Invert rotation of left motor
-  // #define DEBUG_SERIAL_USART3               // right sensor board cable, disable if I2C (nunchuk or lcd) is used!
+  // #define DEBUG_SERIAL_USART3               // right sensor board cable, disable if I2C (lcd) is used!
 
   // Extra functionality
   // #define CRUISE_CONTROL_SUPPORT            // [-] Flag to enable Cruise Control support. Activation/Deactivation is done by sideboard button or Brake pedal press.
@@ -595,7 +557,7 @@
 
 
 // ############################### VALIDATE SETTINGS ###############################
-#if !defined(VARIANT_ADC) && !defined(VARIANT_USART) && !defined(VARIANT_NUNCHUK) && !defined(VARIANT_PPM) && !defined(VARIANT_PWM) && \
+#if !defined(VARIANT_ADC) && !defined(VARIANT_USART) && !defined(VARIANT_PPM) && !defined(VARIANT_PWM) && \
     !defined(VARIANT_IBUS) && !defined(VARIANT_HOVERCAR)
   #error Variant not defined! Please check platformio.ini or Inc/config.h for available variants.
 #endif
@@ -666,10 +628,6 @@
 
 
 // RIGHT cable checks
-#if defined(CONTROL_NUNCHUK) && (defined(CONTROL_SERIAL_USART3) || defined(SIDEBOARD_SERIAL_USART3) || defined(FEEDBACK_SERIAL_USART3) || defined(DEBUG_SERIAL_USART3))
-  #error CONTROL_NUNCHUK and SERIAL_USART3 not allowed. It is on the same cable.
-#endif
-
 #if defined(CONTROL_PPM_RIGHT) && (defined(CONTROL_SERIAL_USART3) || defined(SIDEBOARD_SERIAL_USART3) || defined(FEEDBACK_SERIAL_USART3) || defined(DEBUG_SERIAL_USART3))
   #error CONTROL_PPM_RIGHT and SERIAL_USART3 not allowed. It is on the same cable.
 #endif
@@ -686,13 +644,11 @@
   #error SUPPORT_BUTTONS_RIGHT and SERIAL_USART3 not allowed. It is on the same cable.
 #endif
 
-#if defined(SUPPORT_BUTTONS_RIGHT) && (defined(CONTROL_NUNCHUK) || defined(CONTROL_PPM_RIGHT) || defined(CONTROL_PWM_RIGHT) || defined(DEBUG_I2C_LCD))
-  #error SUPPORT_BUTTONS_RIGHT and (CONTROL_NUNCHUK or CONTROL_PPM_RIGHT or CONTROL_PWM_RIGHT or DEBUG_I2C_LCD) not allowed. It is on the same cable.
+#if defined(SUPPORT_BUTTONS_RIGHT) || defined(CONTROL_PPM_RIGHT) || defined(CONTROL_PWM_RIGHT) || defined(DEBUG_I2C_LCD))
+  #error SUPPORT_BUTTONS_RIGHT and (CONTROL_PPM_RIGHT or CONTROL_PWM_RIGHT or DEBUG_I2C_LCD) not allowed. It is on the same cable.
 #endif
 
-#if defined(CONTROL_NUNCHUK) && (defined(CONTROL_PPM_RIGHT) || defined(CONTROL_PWM_RIGHT) || defined(DEBUG_I2C_LCD))
-  #error CONTROL_NUNCHUK and (CONTROL_PPM_RIGHT or CONTROL_PWM_RIGHT or DEBUG_I2C_LCD) not allowed. It is on the same cable.
-#endif
+
 
 #if defined(DEBUG_I2C_LCD) && (defined(CONTROL_PPM_RIGHT) || defined(CONTROL_PWM_RIGHT))
   #error DEBUG_I2C_LCD and (CONTROL_PPM_RIGHT or CONTROL_PWM_RIGHT) not allowed. It is on the same cable.

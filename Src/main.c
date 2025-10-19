@@ -72,8 +72,8 @@ extern InputStruct input2[];            // input structure
 
 extern int16_t speedAvg;                // Average measured speed
 extern int16_t speedAvgAbs;             // Average measured speed in absolute
-extern volatile uint32_t timeoutCntGen; // Timeout counter for the General timeout (PPM, PWM, Nunchuk)
-extern volatile uint8_t  timeoutFlgGen; // Timeout Flag for the General timeout (PPM, PWM, Nunchuk)
+extern volatile uint32_t timeoutCntGen; // Timeout counter for the General timeout (PPM, PWM)
+extern volatile uint8_t  timeoutFlgGen; // Timeout Flag for the General timeout (PPM, PWM)
 extern uint8_t timeoutFlgADC;           // Timeout Flag for for ADC Protection: 0 = OK, 1 = Problem detected (line disconnected or wrong ADC data)
 extern uint8_t timeoutFlgSerial;        // Timeout Flag for Rx Serial command: 0 = OK, 1 = Problem detected (line disconnected or wrong Rx data)
 
@@ -342,21 +342,6 @@ int main(void) {
         pwml = cmdL;
       #endif
 
-
-      #ifdef SUPPORT_NUNCHUK
-        if (transpotter_counter % 500 == 0) {
-          if (nunchuk_connected == 0 && enable == 0) {
-              if(Nunchuk_Read() == NUNCHUK_CONNECTED) {
-                nunchuk_connected = 1;
-	      }
-	    } else {
-              nunchuk_connected = 0;
-	    }
-          }
-        }   
-      #endif
-
-
     // ####### SIDEBOARDS HANDLING #######
     #if defined(SIDEBOARD_SERIAL_USART2)
       sideboardSensors((uint8_t)Sideboard_L.sensors);
@@ -457,7 +442,7 @@ int main(void) {
       beepCount(2, 24, 1);
     } else if (timeoutFlgSerial) {                                                                    // 3 beeps (low pitch): Serial timeout
       beepCount(3, 24, 1);
-    } else if (timeoutFlgGen) {                                                                       // 4 beeps (low pitch): General timeout (PPM, PWM, Nunchuk)
+    } else if (timeoutFlgGen) {                                                                       // 4 beeps (low pitch): General timeout (PPM, PWM)
       beepCount(4, 24, 1);
     } else if (TEMP_WARNING_ENABLE && board_temp_deg_c >= TEMP_WARNING) {                             // 5 beeps (low pitch): Mainboard temperature warning
       beepCount(5, 24, 1);
