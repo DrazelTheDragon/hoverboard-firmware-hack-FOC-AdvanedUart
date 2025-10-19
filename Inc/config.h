@@ -9,7 +9,7 @@
 // Keil uVision: select desired variant from the Target drop down menu (to the right of the Load button)
 // Ubuntu: define the desired build variant here if you want to use make in console
 // or use VARIANT environment variable for example like "make -e VARIANT=VARIANT_NUNCHUK". Select only one at a time.
-#if !defined(PLATFORMIO)
+//#if !defined(PLATFORMIO)
   //#define VARIANT_ADC         // Variant for control via ADC input
   //#define VARIANT_USART       // Variant for Serial control via USART3 input
   //#define VARIANT_NUNCHUK     // Variant for Nunchuk controlled vehicle build
@@ -19,8 +19,7 @@
   //#define VARIANT_HOVERCAR    // Variant for HOVERCAR build
   //#define VARIANT_HOVERBOARD  // Variant for HOVERBOARD build
   //#define VARIANT_TRANSPOTTER // Variant for TRANSPOTTER build https://github.com/NiklasFauth/hoverboard-firmware-hack/wiki/Build-Instruction:-TranspOtter https://hackaday.io/project/161891-transpotter-ng
-  //#define VARIANT_SKATEBOARD  // Variant for SKATEBOARD build
-#endif
+//#endif
 // ########################### END OF VARIANT SELECTION ############################
 
 
@@ -597,40 +596,6 @@
   #define PRI_INPUT2          2, -1000, 0, 1000, 0  // dummy input, TRANSPOTTER does not use input limitations
 #endif
 // ############################# END OF VARIANT_TRANSPOTTER SETTINGS ########################
-
-
-// ################################# VARIANT_SKATEBOARD SETTINGS ##############################
-#ifdef VARIANT_SKATEBOARD
-/* ###### CONTROL VIA RC REMOTE ######
- * right sensor board cable. Connect PB10 to channel 1 and PB11 to channel 2 on receiver.
- * Channel 1: steering, Channel 2: speed.
-*/
-  #define FLASH_WRITE_KEY     0x1010    // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-  #undef  CTRL_MOD_REQ
-  #define CTRL_MOD_REQ        TRQ_MODE  // SKATEBOARD works best in TORQUE Mode
-  // #define CONTROL_PWM_LEFT    0         // use RC PWM as input on the LEFT cable. Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART2!
-  #define CONTROL_PWM_RIGHT   0         // use RC PWM as input on the RIGHT cable.  Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART3!
-
-  #define PRI_INPUT1          0, -1000, 0, 1000,   0    // Disabled. TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #define PRI_INPUT2          2,  -800, 0,  700, 100    // Active.   TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #define INPUT_BRK           -400      // (-1000 - 0) Change this value to adjust the braking amount
-
-  #define FILTER              6553      // 0.1f [-] fixdt(0,16,16) lower value == softer filter [0, 65535] = [0.0 - 1.0].
-  #define SPEED_COEFFICIENT   16384     // 1.0f [-] fixdt(1,16,14) higher value == stronger. [0, 65535] = [-2.0 - 2.0]. In this case 16384 = 1.0 * 2^14
-  #define STEER_COEFFICIENT   0         // 1.0f [-] fixdt(1,16,14) higher value == stronger. [0, 65535] = [-2.0 - 2.0]. In this case 16384 = 1.0 * 2^14. If you do not want any steering, set it to 0.
-  #define INVERT_R_DIRECTION
-  #define INVERT_L_DIRECTION
-  // #define SUPPORT_BUTTONS_LEFT       // use left sensor board cable for button inputs.  Disable DEBUG_SERIAL_USART2!
-  // #define SUPPORT_BUTTONS_RIGHT      // use right sensor board cable for button inputs. Disable DEBUG_SERIAL_USART3!
-  // #define STANDSTILL_HOLD_ENABLE     // [-] Flag to hold the position when standtill is reached. Only available and makes sense for VOLTAGE or TORQUE mode.
-
-  #ifdef CONTROL_PWM_RIGHT
-    #define DEBUG_SERIAL_USART2         // left sensor cable debug
-  #else
-    #define DEBUG_SERIAL_USART3         // right sensor cable debug
-  #endif
-#endif
-// ############################# END OF VARIANT_SKATEBOARD SETTINGS ############################
 
 
 
