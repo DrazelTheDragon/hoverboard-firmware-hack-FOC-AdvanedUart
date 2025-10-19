@@ -31,7 +31,7 @@
 #include "rtwtypes.h"
 #include "comms.h"
 
-#if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
+#if defined(DEBUG_I2C_LCD)
 #include "hd44780.h"
 #endif
 
@@ -45,7 +45,7 @@ extern TIM_HandleTypeDef htim_right;
 extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 extern volatile adc_buf_t adc_buffer;
-#if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
+#if defined(DEBUG_I2C_LCD)
   extern LCD_PCF8574_HandleTypeDef lcd;
   extern uint8_t LCDerrorFlag;
 #endif
@@ -137,26 +137,15 @@ static uint8_t sideboard_leds_L;
 static uint8_t sideboard_leds_R;
 #endif
 
-#ifdef VARIANT_TRANSPOTTER
-  uint8_t  nunchuk_connected;
-  extern float    setDistance;  
-
-  static uint8_t  checkRemote = 0;
-  static uint16_t distance;
-  static float    steering;
-  static int      distanceErr;  
-  static int      lastDistance = 0;
-  static uint16_t transpotter_counter = 0;
-#endif
 
 static int16_t    speed;                // local variable for speed. -1000 to 1000
-#ifndef VARIANT_TRANSPOTTER
+
   static int16_t  steer;                // local variable for steering. -1000 to 1000
   static int16_t  steerRateFixdt;       // local fixed-point variable for steering rate limiter
   static int16_t  speedRateFixdt;       // local fixed-point variable for speed rate limiter
   static int32_t  steerFixdt;           // local fixed-point variable for steering low-pass filter
   static int32_t  speedFixdt;           // local fixed-point variable for speed low-pass filter
-#endif
+
 
 static uint32_t    buzzerTimer_prev = 0;
 static uint32_t    inactivity_timeout_counter;
@@ -254,7 +243,7 @@ int main(void) {
     readCommand();                        // Read Command: input1[inIdx].cmd, input2[inIdx].cmd
     calcAvgSpeed();                       // Calculate average measured speed: speedAvg, speedAvgAbs
 
-    #ifndef VARIANT_TRANSPOTTER
+    
       // ####### MOTOR ENABLING: Only if the initial input is very small (for SAFETY) #######
       if (enable == 0 && !rtY_Left.z_errCode && !rtY_Right.z_errCode && 
           ABS(input1[inIdx].cmd) < 50 && ABS(input2[inIdx].cmd) < 50){
@@ -352,77 +341,12 @@ int main(void) {
       #else
         pwml = cmdL;
       #endif
-    #endif
 
-    #ifdef VARIANT_TRANSPOTTER
-      distance    = CLAMP(input1[inIdx].cmd - 180, 0, 4095);
-      steering    = (input2[inIdx].cmd - 2048) / 2048.0;
-      distanceErr = distance - (int)(setDistance * 1345);
-
-      if (nunchuk_connected == 0) {
-        cmdL = cmdL * 0.8f + (CLAMP(distanceErr + (steering*((float)MAX(ABS(distanceErr), 50)) * ROT_P), -850, 850) * -0.2f);
-        cmdR = cmdR * 0.8f + (CLAMP(distanceErr - (steering*((float)MAX(ABS(distanceErr), 50)) * ROT_P), -850, 850) * -0.2f);
-        if (distanceErr > 0) {
-          enable = 1;
-        }
-        if (distanceErr > -300) {
-          #ifdef INVERT_R_DIRECTION
-            pwmr = cmdR;
-          #else
-            pwmr = -cmdR;
-          #endif
-          #ifdef INVERT_L_DIRECTION
-            pwml = -cmdL;
-          #else
-            pwml = cmdL;
-          #endif
-
-          if (checkRemote) {
-            if (!HAL_GPIO_ReadPin(LED_PORT, LED_PIN)) {
-              //enable = 1;
-            } else {
-              enable = 0;
-            }
-          }
-        } else {
-          enable = 0;
-        }
-        timeoutCntGen = 0;
-        timeoutFlgGen = 0;
-      }
-
-      if (timeoutFlgGen) {
-        pwml = 0;
-        pwmr = 0;
-        enable = 0;
-        #ifdef SUPPORT_LCD
-          LCD_SetLocation(&lcd,  0, 0); LCD_WriteString(&lcd, "Len:");
-          LCD_SetLocation(&lcd,  8, 0); LCD_WriteString(&lcd, "m(");
-          LCD_SetLocation(&lcd, 14, 0); LCD_WriteString(&lcd, "m)");
-        #endif
-        HAL_Delay(1000);
-        nunchuk_connected = 0;
-      }
-
-      if ((distance / 1345.0) - setDistance > 0.5 && (lastDistance / 1345.0) - setDistance > 0.5) { // Error, robot too far away!
-        enable = 0;
-        beepLong(5);
-        #ifdef SUPPORT_LCD
-          LCD_ClearDisplay(&lcd);
-          HAL_Delay(5);
-          LCD_SetLocation(&lcd, 0, 0); LCD_WriteString(&lcd, "Emergency Off!");
-          LCD_SetLocation(&lcd, 0, 1); LCD_WriteString(&lcd, "Keeper too fast.");
-        #endif
-        poweroff();
-      }
 
       #ifdef SUPPORT_NUNCHUK
         if (transpotter_counter % 500 == 0) {
           if (nunchuk_connected == 0 && enable == 0) {
               if(Nunchuk_Read() == NUNCHUK_CONNECTED) {
-                #ifdef SUPPORT_LCD
-                  LCD_SetLocation(&lcd, 0, 0); LCD_WriteString(&lcd, "Nunchuk Control");
-                #endif
                 nunchuk_connected = 1;
 	      }
 	    } else {
@@ -432,22 +356,6 @@ int main(void) {
         }   
       #endif
 
-      #ifdef SUPPORT_LCD
-        if (transpotter_counter % 100 == 0) {
-          if (LCDerrorFlag == 1 && enable == 0) {
-
-          } else {
-            if (nunchuk_connected == 0) {
-              LCD_SetLocation(&lcd,  4, 0); LCD_WriteFloat(&lcd,distance/1345.0,2);
-              LCD_SetLocation(&lcd, 10, 0); LCD_WriteFloat(&lcd,setDistance,2);
-            }
-            LCD_SetLocation(&lcd,  4, 1); LCD_WriteFloat(&lcd,batVoltage, 1);
-            // LCD_SetLocation(&lcd, 11, 1); LCD_WriteFloat(&lcd,MAX(ABS(currentR), ABS(currentL)),2);
-          }
-        }
-      #endif
-      transpotter_counter++;
-    #endif
 
     // ####### SIDEBOARDS HANDLING #######
     #if defined(SIDEBOARD_SERIAL_USART2)

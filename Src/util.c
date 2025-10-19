@@ -31,7 +31,7 @@
 #include "rtwtypes.h"
 #include "comms.h"
 
-#if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
+#if defined(DEBUG_I2C_LCD)
 #include "hd44780.h"
 #endif
 
@@ -107,21 +107,13 @@ uint8_t  timeoutFlgSerial = 0;          // Timeout Flag for Rx Serial command: 0
 uint8_t  ctrlModReqRaw = CTRL_MOD_REQ;
 uint8_t  ctrlModReq    = CTRL_MOD_REQ;  // Final control mode request 
 
-#if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
+#if defined(DEBUG_I2C_LCD)
 LCD_PCF8574_HandleTypeDef lcd;
 #endif
 
-#ifdef VARIANT_TRANSPOTTER
-float    setDistance;
-uint16_t VirtAddVarTab[NB_OF_VAR] = {1337};       // Virtual address defined by the user: 0xFFFF value is prohibited
-static   uint16_t saveValue       = 0;
-static   uint8_t  saveValue_valid = 0;
-#elif !defined(VARIANT_TRANSPOTTER)
+
 uint16_t VirtAddVarTab[NB_OF_VAR] = {1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009,
                                      1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018};
-#else
-uint16_t VirtAddVarTab[NB_OF_VAR] = {1000};       // Dummy virtual address to avoid warnings
-#endif
 
 
 //------------------------------------------------------------------------
@@ -130,11 +122,6 @@ uint16_t VirtAddVarTab[NB_OF_VAR] = {1000};       // Dummy virtual address to av
 static int16_t INPUT_MAX;             // [-] Input target maximum limitation
 static int16_t INPUT_MIN;             // [-] Input target minimum limitation
 
-
-#if !defined(VARIANT_TRANSPOTTER)
-  static uint8_t  cur_spd_valid  = 0;
-  static uint8_t  inp_cal_valid  = 0;
-#endif
 
 #if defined(CONTROL_ADC)
 static uint16_t timeoutCntADC = ADC_PROTECT_TIMEOUT;  // Timeout counter for ADC Protection
@@ -297,7 +284,6 @@ void Input_Init(void) {
     UART_DisableRxErrors(&huart3);
   #endif
 
-  #if !defined(VARIANT_TRANSPOTTER)
     uint16_t writeCheck, readVal;
     HAL_FLASH_Unlock();
     EE_Init();            /* EEPROM Init */
@@ -345,23 +331,8 @@ void Input_Init(void) {
       }
     }
     HAL_FLASH_Lock();
-  #endif
 
-  #ifdef VARIANT_TRANSPOTTER
-    enable = 1;
-
-    HAL_FLASH_Unlock();
-    EE_Init();            /* EEPROM Init */
-    EE_ReadVariable(VirtAddVarTab[0], &saveValue);
-    HAL_FLASH_Lock();
-
-    setDistance = saveValue / 1000.0;
-    if (setDistance < 0.2) {
-      setDistance = 1.0;
-    }
-  #endif
-
-  #if defined(DEBUG_I2C_LCD) || defined(SUPPORT_LCD)
+  #if defined(DEBUG_I2C_LCD)
     I2C_Init();
     HAL_Delay(50);
     lcd.pcf8574.PCF_I2C_ADDRESS = 0x27;
@@ -378,23 +349,9 @@ void Input_Init(void) {
     LCD_ClearDisplay(&lcd);
     HAL_Delay(5);
     LCD_SetLocation(&lcd, 0, 0);
-    #ifdef VARIANT_TRANSPOTTER
-      LCD_WriteString(&lcd, "TranspOtter V2.1");
-    #else
       LCD_WriteString(&lcd, "Hover V2.0");
     #endif
     LCD_SetLocation(&lcd,  0, 1); LCD_WriteString(&lcd, "Initializing...");
-  #endif
-
-  #if defined(VARIANT_TRANSPOTTER) && defined(SUPPORT_LCD)
-    LCD_ClearDisplay(&lcd);
-    HAL_Delay(5);
-    LCD_SetLocation(&lcd,  0, 1); LCD_WriteString(&lcd, "Bat:");
-    LCD_SetLocation(&lcd,  8, 1); LCD_WriteString(&lcd, "V");
-    LCD_SetLocation(&lcd, 15, 1); LCD_WriteString(&lcd, "A");
-    LCD_SetLocation(&lcd,  0, 0); LCD_WriteString(&lcd, "Len:");
-    LCD_SetLocation(&lcd,  8, 0); LCD_WriteString(&lcd, "m(");
-    LCD_SetLocation(&lcd, 14, 0); LCD_WriteString(&lcd, "m)");
   #endif
 }
 
@@ -504,7 +461,7 @@ void adcCalibLim(void) {
     return;
   }
 
-#if !defined(VARIANT_TRANSPOTTER)
+
 
   #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
   printf("Input calibration started...\r\n");
@@ -599,7 +556,6 @@ void adcCalibLim(void) {
     #endif
   }
 
-#endif
 #endif  // AUTO_CALIBRATION_ENA
 }
  /*
@@ -615,7 +571,7 @@ void updateCurSpdLim(void) {
     return;
   }
 
-#if !defined(VARIANT_TRANSPOTTER)
+
 
   #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
   printf("Torque and Speed limits update started...\r\n");
@@ -657,7 +613,7 @@ void updateCurSpdLim(void) {
           cur_spd_valid, input1_fixdt, cur_factor, rtP_Left.i_max, input2_fixdt, spd_factor, rtP_Left.n_max);
   #endif
 
-#endif
+
 }
 
  /*
@@ -924,17 +880,6 @@ void readInputRaw(void) {
       input2[inIdx].raw = (pwm_captured_ch2_value - 500) * 2;
     }
     #endif
-
-    #ifdef VARIANT_TRANSPOTTER
-      #ifdef GAMETRAK_CONNECTION_NORMAL
-        input1[inIdx].cmd = adc_buffer.l_rx2;
-        input2[inIdx].cmd = adc_buffer.l_tx2;
-      #endif
-      #ifdef GAMETRAK_CONNECTION_ALTERNATE
-        input1[inIdx].cmd = adc_buffer.l_tx2;
-        input2[inIdx].cmd = adc_buffer.l_rx2;
-      #endif
-    #endif
 }
 
  /*
@@ -1007,10 +952,10 @@ void handleTimeout(void) {
       timeoutFlgSerial = timeoutFlgSerial_L || timeoutFlgSerial_R;
     #endif
 
-    #if defined(CONTROL_NUNCHUK) || defined(SUPPORT_NUNCHUK) || defined(VARIANT_TRANSPOTTER) || \
+    #if defined(CONTROL_NUNCHUK) || defined(SUPPORT_NUNCHUK) || \
         defined(CONTROL_PPM_LEFT) || defined(CONTROL_PPM_RIGHT) || defined(CONTROL_PWM_LEFT) || defined(CONTROL_PWM_RIGHT)
       if (timeoutCntGen++ >= TIMEOUT) {                 // Timeout qualification
-        #if defined(CONTROL_NUNCHUK) || defined(SUPPORT_NUNCHUK) || defined(VARIANT_TRANSPOTTER) || \
+        #if defined(CONTROL_NUNCHUK) || defined(SUPPORT_NUNCHUK) || \
             (defined(CONTROL_PPM_LEFT) && CONTROL_PPM_LEFT == 0) || (defined(CONTROL_PPM_RIGHT) && CONTROL_PPM_RIGHT == 0) || \
             (defined(CONTROL_PWM_LEFT) && CONTROL_PWM_LEFT == 0) || (defined(CONTROL_PWM_RIGHT) && CONTROL_PWM_RIGHT == 0)
           timeoutFlgGen = 1;                            // Report Timeout only on the Primary Input
@@ -1053,14 +998,13 @@ void handleTimeout(void) {
 void readCommand(void) {
     readInputRaw();
 
-    #if !defined(VARIANT_TRANSPOTTER)
+    
       calcInputCmd(&input1[inIdx], INPUT_MIN, INPUT_MAX);
       #if !defined(VARIANT_SKATEBOARD)
         calcInputCmd(&input2[inIdx], INPUT_MIN, INPUT_MAX);
       #else
         calcInputCmd(&input2[inIdx], INPUT_BRK, INPUT_MAX);
       #endif
-    #endif
 
     handleTimeout();
 
@@ -1505,14 +1449,6 @@ void sideboardSensors(uint8_t sensors) {
  * This function makes sure data is not lost after power-off
  */
 void saveConfig() {
-  #ifdef VARIANT_TRANSPOTTER
-    if (saveValue_valid) {
-      HAL_FLASH_Unlock();
-      EE_WriteVariable(VirtAddVarTab[0], saveValue);
-      HAL_FLASH_Lock();
-    }
-  #endif
-  #if !defined(VARIANT_TRANSPOTTER)
     if (inp_cal_valid || cur_spd_valid) {
       #if defined(DEBUG_SERIAL_USART2) || defined(DEBUG_SERIAL_USART3)
         printf("Saving configuration to EEprom\r\n");
@@ -1534,7 +1470,6 @@ void saveConfig() {
       }
       HAL_FLASH_Lock();
     }
-  #endif 
 }
 
 void poweroff(void) {
@@ -1564,7 +1499,6 @@ void poweroff(void) {
 
 
 void poweroffPressCheck(void) {
-  #if !defined(VARIANT_TRANSPOTTER)
     if(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) {
       uint16_t cnt_press = 0;
       while(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) {
@@ -1595,34 +1529,6 @@ void poweroffPressCheck(void) {
       poweroff();
       }
     }
-  #elif defined(VARIANT_TRANSPOTTER)
-    if(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) {
-      enable = 0;
-      while(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) { HAL_Delay(10); }
-      beepShort(5);
-      HAL_Delay(300);
-      if (HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) {
-        while(HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) { HAL_Delay(10); }
-        beepLong(5);
-        HAL_Delay(350);
-        poweroff();
-      } else {
-        setDistance += 0.25;
-        if (setDistance > 2.6) {
-          setDistance = 0.5;
-        }
-        beepShort(setDistance / 0.25);
-        saveValue = setDistance * 1000;
-        saveValue_valid = 1;
-      }
-    }
-  #else
-    if (HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) {
-      enable = 0;                                             // disable motors
-      while (HAL_GPIO_ReadPin(BUTTON_PORT, BUTTON_PIN)) {}    // wait until button is released
-      poweroff();                                             // release power-latch
-    }
-  #endif
 }
 
 

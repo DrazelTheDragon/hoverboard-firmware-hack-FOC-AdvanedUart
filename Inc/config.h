@@ -17,7 +17,6 @@
   //#define VARIANT_PWM         // Variant for RC-Remote with PWM Signal
   //#define VARIANT_IBUS        // Variant for RC-Remotes with FLYSKY IBUS
   //#define VARIANT_HOVERCAR    // Variant for HOVERCAR build
-  //#define VARIANT_TRANSPOTTER // Variant for TRANSPOTTER build https://github.com/NiklasFauth/hoverboard-firmware-hack/wiki/Build-Instruction:-TranspOtter https://hackaday.io/project/161891-transpotter-ng
 //#endif
 // ########################### END OF VARIANT SELECTION ############################
 
@@ -25,11 +24,7 @@
 // ############################### DO-NOT-TOUCH SETTINGS ###############################
 #define PWM_FREQ            16000     // PWM frequency in Hz / is also used for buzzer
 #define DEAD_TIME              48     // PWM deadtime
-#ifdef VARIANT_TRANSPOTTER
-  #define DELAY_IN_MAIN_LOOP    2
-#else
-  #define DELAY_IN_MAIN_LOOP    5     // in ms. default 5. it is independent of all the timing critical stuff. do not touch if you do not know what you are doing.
-#endif
+#define DELAY_IN_MAIN_LOOP    5     // in ms. default 5. it is independent of all the timing critical stuff. do not touch if you do not know what you are doing.
 #define TIMEOUT                20     // number of wrong / missing input commands before emergency off
 #define A2BIT_CONV             50     // A to bit for current conversion on ADC. Example: 1 A = 50, 2 A = 100, etc
 // #define PRINTF_FLOAT_SUPPORT          // [-] Uncomment this for printf to support float on Serial Debug. It will increase code size! Better to avoid it!
@@ -554,28 +549,6 @@
 // ######################## END OF VARIANT_HOVERCAR SETTINGS #########################
 
 
-// ################################# VARIANT_TRANSPOTTER SETTINGS ############################
-//TODO ADD VALIDATION
-#ifdef VARIANT_TRANSPOTTER
-  #define FLASH_WRITE_KEY     0x1009    // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-  #define CONTROL_GAMETRAK
-  #define SUPPORT_LCD
-  // #define SUPPORT_NUNCHUK
-  #define GAMETRAK_CONNECTION_NORMAL    // for normal wiring according to the wiki instructions
-  // #define GAMETRAK_CONNECTION_ALTERNATE // use this define instead if you messed up the gametrak ADC wiring (steering is speed, and length of the wire is steering)
-  #define ROT_P               1.2       // P coefficient for the direction controller. Positive / Negative values to invert gametrak steering direction.
-  // during nunchuk control (only relevant when activated)
-  #define SPEED_COEFFICIENT   14746     // 0.9f - higher value == stronger. 0.0 to ~2.0?
-  #define STEER_COEFFICIENT   8192      // 0.5f - higher value == stronger. if you do not want any steering, set it to 0.0; 0.0 to 1.0
-  #define INVERT_R_DIRECTION            // Invert right motor
-  #define INVERT_L_DIRECTION            // Invert left motor
-  #define PRI_INPUT1          2, -1000, 0, 1000, 0  // dummy input, TRANSPOTTER does not use input limitations
-  #define PRI_INPUT2          2, -1000, 0, 1000, 0  // dummy input, TRANSPOTTER does not use input limitations
-#endif
-// ############################# END OF VARIANT_TRANSPOTTER SETTINGS ########################
-
-
-
 // ########################### UART SETIINGS ############################
 #if defined(FEEDBACK_SERIAL_USART2) || defined(CONTROL_SERIAL_USART2) || defined(DEBUG_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART2) || \
     defined(FEEDBACK_SERIAL_USART3) || defined(CONTROL_SERIAL_USART3) || defined(DEBUG_SERIAL_USART3) || defined(SIDEBOARD_SERIAL_USART3)
@@ -623,7 +596,7 @@
 
 // ############################### VALIDATE SETTINGS ###############################
 #if !defined(VARIANT_ADC) && !defined(VARIANT_USART) && !defined(VARIANT_NUNCHUK) && !defined(VARIANT_PPM) && !defined(VARIANT_PWM) && \
-    !defined(VARIANT_IBUS) && !defined(VARIANT_HOVERCAR) && !defined(VARIANT_TRANSPOTTER)
+    !defined(VARIANT_IBUS) && !defined(VARIANT_HOVERCAR)
   #error Variant not defined! Please check platformio.ini or Inc/config.h for available variants.
 #endif
 
