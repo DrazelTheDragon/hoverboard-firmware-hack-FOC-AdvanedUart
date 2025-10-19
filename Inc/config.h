@@ -14,7 +14,6 @@
   //#define VARIANT_USART       // Variant for Serial control via USART3 input
   //#define VARIANT_PPM         // Variant for RC-Remote with PPM-Sum Signal
   //#define VARIANT_PWM         // Variant for RC-Remote with PWM Signal
-  //#define VARIANT_IBUS        // Variant for RC-Remotes with FLYSKY IBUS
 //#endif
 // ########################### END OF VARIANT SELECTION ############################
 
@@ -228,8 +227,8 @@
  * DEBUG ASCII output is:
  * // "in1:345 in2:1337 cmdL:0 cmdR:0 BatADC:0 BatV:0 TempADC:0 Temp:0\r\n"
  *
- * in1:     (int16_t)input1[inIdx].raw);                                        raw input1: ADC1, UART, PWM, PPM, iBUS
- * in2:     (int16_t)input2[inIdx].raw);                                        raw input2: ADC2, UART, PWM, PPM, iBUS
+ * in1:     (int16_t)input1[inIdx].raw);                                        raw input1: ADC1, UART, PWM, PPM
+ * in2:     (int16_t)input2[inIdx].raw);                                        raw input2: ADC2, UART, PWM, PPM
  * cmdL:    (int16_t)cmdL);                                                     output command Left: [-1000, 1000]
  * cmdR:    (int16_t)cmdR);                                                     output command Right: [-1000, 1000]
  * BatADC:  (int16_t)adc_buffer.batt1);                                         Battery adc-value measured by mainboard
@@ -408,48 +407,6 @@
 // ############################# END OF VARIANT_PWM SETTINGS ############################
 
 
-
-// ################################# VARIANT_IBUS SETTINGS ##############################
-#ifdef VARIANT_IBUS
-/* CONTROL VIA RC REMOTE WITH FLYSKY IBUS PROTOCOL 
-* Connected to Right sensor board cable. Channel 1: steering, Channel 2: speed.
-*/
-  #define CONTROL_IBUS                    // use IBUS as input. Number indicates priority for dual-input.
-  #define IBUS_NUM_CHANNELS       14      // total number of IBUS channels to receive, even if they are not used.
-  #define IBUS_LENGTH             0x20
-  #define IBUS_COMMAND            0x40
-  #define USART3_BAUD             115200
-
-  // #define DUAL_INPUTS                     // ADC*(Primary) + iBUS(Auxiliary). Uncomment this to use Dual-inputs
-  #ifdef DUAL_INPUTS
-    #define FLASH_WRITE_KEY       0x1106  // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-    #define CONTROL_ADC           0       // use ADC as input. Number indicates priority for dual-input. Disable CONTROL_SERIAL_USART2, FEEDBACK_SERIAL_USART2, DEBUG_SERIAL_USART2!
-    #define CONTROL_SERIAL_USART3 1       // use RC iBUS input on the RIGHT cable. Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART3!
-    #define FEEDBACK_SERIAL_USART3        // right sensor board cable, disable if ADC or PPM is used!
-    #define PRI_INPUT1            3,     0, 0, 4095, 0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define PRI_INPUT2            3,     0, 0, 4095, 0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define AUX_INPUT1            3, -1000, 0, 1000, 0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define AUX_INPUT2            3, -1000, 0, 1000, 0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #else
-    #define FLASH_WRITE_KEY       0x1006  // Flash memory writing key. Change this key to ignore the input calibrations from the flash memory and use the ones in config.h
-    #define CONTROL_SERIAL_USART3 0       // use RC iBUS input on the RIGHT cable, disable if ADC or PPM is used!
-    #define FEEDBACK_SERIAL_USART3        // right sensor board cable, disable if ADC or PPM is used!
-    #define PRI_INPUT1            3, -1000, 0, 1000, 0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-    #define PRI_INPUT2            3, -1000, 0, 1000, 0  // TYPE, MIN, MID, MAX, DEADBAND. See INPUT FORMAT section
-  #endif
-
-  // #define TANK_STEERING                // use for tank steering, each input controls each wheel 
-
-  #if defined(CONTROL_SERIAL_USART3) && !defined(DUAL_INPUTS)
-    #define DEBUG_SERIAL_USART2           // left sensor cable debug
-  #elif defined(DEBUG_SERIAL_USART2) && !defined(DUAL_INPUTS)
-    #define DEBUG_SERIAL_USART3           // right sensor cable debug
-  #endif
-#endif
-// ############################# END OF VARIANT_IBUS SETTINGS ############################
-
-
-
 // ########################### UART SETIINGS ############################
 #if defined(FEEDBACK_SERIAL_USART2) || defined(CONTROL_SERIAL_USART2) || defined(DEBUG_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART2) || \
     defined(FEEDBACK_SERIAL_USART3) || defined(CONTROL_SERIAL_USART3) || defined(DEBUG_SERIAL_USART3) || defined(SIDEBOARD_SERIAL_USART3)
@@ -496,8 +453,7 @@
 
 
 // ############################### VALIDATE SETTINGS ###############################
-#if !defined(VARIANT_ADC) && !defined(VARIANT_USART) && !defined(VARIANT_PPM) && !defined(VARIANT_PWM) && \
-    !defined(VARIANT_IBUS)
+#if !defined(VARIANT_ADC) && !defined(VARIANT_USART) && !defined(VARIANT_PPM) && !defined(VARIANT_PWM)
   #error Variant not defined! Please check platformio.ini or Inc/config.h for available variants.
 #endif
 
@@ -583,7 +539,7 @@
   #error SUPPORT_BUTTONS_RIGHT and SERIAL_USART3 not allowed. It is on the same cable.
 #endif
 
-#if defined(SUPPORT_BUTTONS_RIGHT) || defined(CONTROL_PPM_RIGHT) || defined(CONTROL_PWM_RIGHT) || defined(DEBUG_I2C_LCD))
+#if defined(SUPPORT_BUTTONS_RIGHT) || defined(CONTROL_PPM_RIGHT) || defined(CONTROL_PWM_RIGHT) || defined(DEBUG_I2C_LCD)
   #error SUPPORT_BUTTONS_RIGHT and (CONTROL_PPM_RIGHT or CONTROL_PWM_RIGHT or DEBUG_I2C_LCD) not allowed. It is on the same cable.
 #endif
 

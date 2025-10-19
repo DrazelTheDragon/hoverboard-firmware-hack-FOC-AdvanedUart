@@ -26,22 +26,12 @@
 
 // Rx Structures USART
 #if defined(CONTROL_SERIAL_USART2) || defined(CONTROL_SERIAL_USART3)
-  #ifdef CONTROL_IBUS
-    typedef struct{
-      uint8_t  start;
-      uint8_t  type; 
-      uint8_t  channels[IBUS_NUM_CHANNELS*2];
-      uint8_t  checksuml;
-      uint8_t  checksumh;
-    } SerialCommand;
-  #else
     typedef struct{
       uint16_t  start;
       int16_t   steer;
       int16_t   speed;
       uint16_t  checksum;
     } SerialCommand;
-  #endif
 #endif
 #if defined(SIDEBOARD_SERIAL_USART2) || defined(SIDEBOARD_SERIAL_USART3)
     typedef struct{

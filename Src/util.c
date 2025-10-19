@@ -160,18 +160,12 @@ static uint32_t Sideboard_R_len = sizeof(Sideboard_R);
 static SerialCommand commandL;
 static SerialCommand commandL_raw;
 static uint32_t commandL_len = sizeof(commandL);
-  #ifdef CONTROL_IBUS
-  static uint16_t ibusL_captured_value[IBUS_NUM_CHANNELS];
-  #endif
 #endif
 
 #if defined(CONTROL_SERIAL_USART3)
 static SerialCommand commandR;
 static SerialCommand commandR_raw;
 static uint32_t commandR_len = sizeof(commandR);
-  #ifdef CONTROL_IBUS
-  static uint16_t ibusR_captured_value[IBUS_NUM_CHANNELS];
-  #endif
 #endif
 
 #if defined(SUPPORT_BUTTONS) || defined(SUPPORT_BUTTONS_LEFT) || defined(SUPPORT_BUTTONS_RIGHT)
@@ -795,30 +789,15 @@ void readInputRaw(void) {
 
     #if defined(CONTROL_SERIAL_USART2)
     if (inIdx == CONTROL_SERIAL_USART2) {
-      #ifdef CONTROL_IBUS
-        for (uint8_t i = 0; i < (IBUS_NUM_CHANNELS * 2); i+=2) {
-          ibusL_captured_value[(i/2)] = CLAMP(commandL.channels[i] + (commandL.channels[i+1] << 8) - 1000, 0, INPUT_MAX); // 1000-2000 -> 0-1000
-        }
-        input1[inIdx].raw = (ibusL_captured_value[0] - 500) * 2;
-        input2[inIdx].raw = (ibusL_captured_value[1] - 500) * 2; 
-      #else
         input1[inIdx].raw = commandL.steer;
         input2[inIdx].raw = commandL.speed;
-      #endif
     }
     #endif
+
     #if defined(CONTROL_SERIAL_USART3)
     if (inIdx == CONTROL_SERIAL_USART3) {
-      #ifdef CONTROL_IBUS
-        for (uint8_t i = 0; i < (IBUS_NUM_CHANNELS * 2); i+=2) {
-          ibusR_captured_value[(i/2)] = CLAMP(commandR.channels[i] + (commandR.channels[i+1] << 8) - 1000, 0, INPUT_MAX); // 1000-2000 -> 0-1000
-        }
-        input1[inIdx].raw = (ibusR_captured_value[0] - 500) * 2;
-        input2[inIdx].raw = (ibusR_captured_value[1] - 500) * 2; 
-      #else
         input1[inIdx].raw = commandR.steer;
         input2[inIdx].raw = commandR.speed;
-      #endif
     }
     #endif
 
@@ -1147,29 +1126,7 @@ void usart_process_debug(uint8_t *userCommand, uint32_t len)
 #if defined(CONTROL_SERIAL_USART2) || defined(CONTROL_SERIAL_USART3)
 void usart_process_command(SerialCommand *command_in, SerialCommand *command_out, uint8_t usart_idx)
 {
-  #ifdef CONTROL_IBUS
-    uint16_t ibus_chksum;
-    if (command_in->start == IBUS_LENGTH && command_in->type == IBUS_COMMAND) {
-      ibus_chksum = 0xFFFF - IBUS_LENGTH - IBUS_COMMAND;
-      for (uint8_t i = 0; i < (IBUS_NUM_CHANNELS * 2); i++) {
-        ibus_chksum -= command_in->channels[i];
-      }
-      if (ibus_chksum == (uint16_t)((command_in->checksumh << 8) + command_in->checksuml)) {
-        *command_out = *command_in;
-        if (usart_idx == 2) {             // Sideboard USART2
-          #ifdef CONTROL_SERIAL_USART2
-          timeoutFlgSerial_L = 0;         // Clear timeout flag
-          timeoutCntSerial_L = 0;         // Reset timeout counter
-          #endif
-        } else if (usart_idx == 3) {      // Sideboard USART3
-          #ifdef CONTROL_SERIAL_USART3
-          timeoutFlgSerial_R = 0;         // Clear timeout flag
-          timeoutCntSerial_R = 0;         // Reset timeout counter
-          #endif
-        }
-      }
-    }
-  #else
+
   uint16_t checksum;
   if (command_in->start == SERIAL_START_FRAME) {
     checksum = (uint16_t)(command_in->start ^ command_in->steer ^ command_in->speed);
@@ -1188,7 +1145,6 @@ void usart_process_command(SerialCommand *command_in, SerialCommand *command_out
       }
     }
   }
-  #endif
 }
 #endif
 
